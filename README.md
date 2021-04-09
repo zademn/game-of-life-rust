@@ -267,7 +267,7 @@ impl EventHandler for MainState {
 
 ### `Draw` function
 1. Set the background color with `graphics::clear(ctx, graphics::BLACK);`
-2. Make a mesth builder and add alive cells and a grid (if given) to it
+2. Make a mesh builder and add alive cells and a grid (if given) to it
 3. Draw the mesh and present it to the screen
 ```rust
 fn draw(&mut self, ctx: &mut Context) -> GameResult {
