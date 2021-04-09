@@ -1,8 +1,7 @@
 # Game of life
-This project is made to practice the rust language.
+I made this project to practice the rust language.
 
-
-Below is a walkthrough through the project code.
+Below is a walkthrough for the project's code.
 
 # Imports
 - We import `ggez` for our graphics and `rayon` to parallelize the update functionality
@@ -84,7 +83,7 @@ impl Cell {
 ```
 
 ## Grid
-> The grid has a width and height and we keep the number of cells in a `Vec<Cells>`
+> The grid has a width and height and we keep the cells in a `Vec<Cells>`
 
 ```rust
 struct Grid {
@@ -96,8 +95,6 @@ struct Grid {
 
 ## State functions
 - The `new` function creates a state based on a configuration given in settings
-
-
 - The `set_state` function sets a given `Vec<Cells>` to alive and the rest to dead
 
 ```rust
@@ -121,8 +118,8 @@ struct Grid {
 2. We update the cells with the new cells
 
 **Note**
-- I used rayon for parallelisation, sequential code killed my fps when I tried bigger configurations
-- Code can obviously be optimized
+- I used `rayon` for parallelization since sequential code killed my fps when I tried bigger configurations
+- Obviously, code can be optimized
 ```rust
     pub fn update(&mut self) {
         // Vector of next states. It will match by index
@@ -163,7 +160,6 @@ Given a cell `idx` in the `Vec<Cells>` return a `bool` representing the next sta
 1. Get neighbours
 2. Count alive neighbours
 3. Get next state acording to the rules https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life
-
 
 ```rust
     fn cell_next_state(&self, cell_idx: usize) -> bool {
