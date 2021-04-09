@@ -5,6 +5,8 @@ Below is a walkthrough for the project's code.
 
 # Imports
 - We import `ggez` for our graphics and `rayon` to parallelize the update functionality
+- https://github.com/ggez/ggez
+- https://github.com/rayon-rs/rayon
 ```rust
 use ggez;
 use ggez::event;
