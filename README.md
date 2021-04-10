@@ -365,5 +365,4 @@ impl EventHandler for MainState {
         Ok(())
     }
 }
-}
 ```
