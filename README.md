@@ -2,78 +2,56 @@
 I made this project to practice the rust language.
 
 Below is a walkthrough for the project's code.
+- cell.rs
+- grid.rs
+- types.rs
+- main.rs
 
 # Imports
-- We import `ggez` for our graphics and `rayon` to parallelize the update functionality
+- We import `ggez` for our graphics and `rayon` to parallelize the update functionality. We use `clap` for command line arguments
 - https://github.com/ggez/ggez
 - https://github.com/rayon-rs/rayon
+- https://github.com/clap-rs/clap
 ```rust
+use crate::grid::Grid;
+use crate::types::Point;
+use clap::{App, Arg};
 use ggez;
 use ggez::event;
 use ggez::event::EventHandler;
 use ggez::graphics;
-use ggez::nalgebra as na;
 use ggez::{Context, ContextBuilder, GameResult};
-use rayon::prelude::*;
+use rand::Rng;
 ```
 
 # Settings
-The settings used for our little game
-```rust
-const SCREEN_SIZE: (f32, f32) = (640., 640.);
-const GRID_HEIGHT: usize = 64;
-const GRID_WIDTH: usize = 64;
-const GRID: bool = false;
-const FPS: u32 = 20;
-const CELL_SIZE: f32 = SCREEN_SIZE.0 / GRID_WIDTH as f32;
 
-const BLINKER: [(usize, usize); 3] = [(4, 4), (4, 5), (4, 6)];
-const TOAD: [(usize, usize); 6] = [(4, 4), (4, 5), (4, 6), (5, 3), (5, 4), (5, 5)];
-const GLIDER: [(usize, usize); 5] = [(2, 1), (2, 3), (3, 2), (3, 3), (4, 2)];
-const GLIDER_GUN: [(usize, usize); 36] = [
-    (5, 1),
-    (5, 2),
-    (6, 1),
-    (6, 2),
-    (5, 11),
-    (6, 11),
-    (7, 11),
-    (4, 12),
-    (3, 13),
-    (3, 14),
-    (8, 12),
-    (9, 13),
-    (9, 14),
-    (6, 15),
-    (4, 16),
-    (5, 17),
-    (6, 17),
-    (7, 17),
-    (6, 18),
-    (8, 16),
-    (3, 21),
-    (4, 21),
-    (5, 21),
-    (3, 22),
-    (4, 22),
-    (5, 22),
-    (2, 23),
-    (6, 23),
-    (1, 25),
-    (2, 25),
-    (6, 25),
-    (7, 25),
-    (3, 35),
-    (4, 35),
-    (3, 36),
-    (4, 36),
-];
+```rust
+
 ```
 # Structs and Logic
+## The point
+> A point structure that stores the `x` and `y` coordinate. We will use `(usize, usize).into()` to convert it fast
+- Defined in types.rs
+```rust
+#[derive(Debug, Copy, Clone)]
+pub struct Point{
+    pub x: usize,
+    pub y: usize,
+}
+
+impl From<(usize, usize)> for Point{
+    fn from(item: (usize, usize)) -> Self{
+        return Self {x: item.0, y: item.1};
+    }
+}
+```
 ## The cell
 > Keeps a `bool` as its state (if it's alive or not)
+- Defined in cell.rs
 ```rust
-struct Cell {
+#[derive(Clone, Debug)]
+pub struct Cell {
     alive: bool,
 }
 
@@ -81,10 +59,16 @@ impl Cell {
     pub fn new(alive: bool) -> Self {
         return Self { alive: alive };
     }
+    pub fn is_alive(&self) -> bool {
+        return self.alive;
+    }
+    pub fn set_state(&mut self, state: bool){
+        self.alive = state;
+    }
 }
 ```
 
-## Grid
+## The Grid
 > The grid has a width and height and we keep the cells in a `Vec<Cells>`
 
 ```rust
@@ -100,6 +84,8 @@ struct Grid {
 - The `set_state` function sets a given `Vec<Cells>` to alive and the rest to dead
 
 ```rust
+impl Grid {
+    // Width and height of the Grid
     pub fn new(width: usize, height: usize) -> Self {
         return Self {
             width: width,
@@ -107,13 +93,14 @@ struct Grid {
             cells: vec![Cell::new(false); width * height],
         };
     }
-    pub fn set_state(&mut self, cells_coords: &[(usize, usize)]) {
+    pub fn set_state(&mut self, cells_coords: &[Point]) {
         self.cells = vec![Cell::new(false); self.width * self.height];
-        for (row, col) in cells_coords.iter() {
-            let idx = coords_to_index(*row, *col);
-            self.cells[idx].alive = true;
+        for &pos in cells_coords.iter() {
+            let idx = self.coords_to_index(pos);
+            self.cells[idx].set_state(true);
         }
     }
+}
 ```
 ### Update function
 1. We get a `Vec<bool>` of `next_states` for each cell
@@ -123,6 +110,7 @@ struct Grid {
 - I used `rayon` for parallelization since sequential code killed my fps when I tried bigger configurations
 - Obviously, code can be optimized
 ```rust
+impl Grid{
     pub fn update(&mut self) {
         // Vector of next states. It will match by index
         // Get next states
@@ -147,65 +135,87 @@ struct Grid {
         // }
         self.cells = (0..self.cells.len())
             .into_par_iter()
-            .map(|idx| {
-                //self.cells[idx].alive = next_states[idx];
-                Cell {
-                    alive: next_states[idx],
-                }
-            })
+            .map(|idx| Cell::new(next_states[idx]))
             .collect::<Vec<Cell>>();
     }
+}
 ```
 
 ### Get next cell
 Given a cell `idx` in the `Vec<Cells>` return a `bool` representing the next state
-1. Get neighbours
-2. Count alive neighbours
-3. Get next state acording to the rules https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life
+1. Count alive neighbours
+2. Get next state acording to the rules https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life
 
 ```rust
+impl Grid{
     fn cell_next_state(&self, cell_idx: usize) -> bool {
         let cell = self.cells[cell_idx].clone();
-        let (cell_row, cell_col) = index_to_coords(cell_idx);
-        // 1. Check boundaries and add neighgours
-        let mut neighbours_vec = vec![];
+        let cell_pos = self.index_to_coords(cell_idx);
+        // Check boundaries and add neighgours
+        let mut num_neighbour_alive = 0;
         for &x_off in [-1, 0, 1].iter() {
             for &y_off in [-1, 0, 1].iter() {
                 if x_off == 0 && y_off == 0 {
                     continue;
                 }
-                let neighbour_coords = (cell_row as isize + x_off, cell_col as isize + y_off);
+                
+                let neighbour_coords = (cell_pos.x as isize + x_off, cell_pos.y as isize + y_off);
                 if neighbour_coords.0 < 0
-                    || neighbour_coords.0 > GRID_WIDTH as isize - 1
+                    || neighbour_coords.0 > self.width as isize - 1
                     || neighbour_coords.1 < 0
-                    || neighbour_coords.1 > GRID_HEIGHT as isize - 1
+                    || neighbour_coords.1 > self.height as isize - 1
                 {
                     continue;
                 }
-                neighbours_vec.push(neighbour_coords);
-            }
-        }
-
-        // Count alive
-        let mut num_neighbour_alive = 0;
-        for (row, col) in neighbours_vec.iter() {
-            let idx = coords_to_index(*row as usize, *col as usize);
-
-            if self.cells[idx].alive {
-                num_neighbour_alive += 1;
+                let neighbour_pos = Point {x: neighbour_coords.0 as usize, y: neighbour_coords.1 as usize};
+                let idx =
+                    self.coords_to_index(neighbour_pos);
+                if self.cells[idx].is_alive() {
+                    num_neighbour_alive += 1;
+                }
             }
         }
 
         // Rules (from wikipedia)
-        if cell.alive && (num_neighbour_alive == 2 || num_neighbour_alive == 3) {
+        if cell.is_alive() && (num_neighbour_alive == 2 || num_neighbour_alive == 3) {
             return true; // alive
         }
-        if cell.alive == false && num_neighbour_alive == 3 {
+        if cell.is_alive() == false && num_neighbour_alive == 3 {
             return true;
         }
 
         return false;
     }
+}
+```
+
+# Clap and CLI
+- We keep the configurations in a `struct Config`
+From the help:
+```
+USAGE:
+    game_of_life.exe [OPTIONS]
+
+FLAGS:
+        --help       Prints help information
+    -V, --version    Prints version information
+
+OPTIONS:
+    -h, --height <height>                  Grid height [default: 64]
+    -s, --initial-state <initial_state>    Initial state options: blinker, toad, glider, glider-gun, random [default:
+                                           random]
+    -w, --width <width>                    Grid width [default: 64]
+```
+```rust
+#[derive(Debug, Clone)]
+pub struct Config {
+    pub grid_width: usize,
+    pub grid_height: usize,
+    pub cell_size: f32,
+    pub screen_size: (f32, f32),
+    pub fps: u32,
+    pub initial_state: String,
+}
 ```
 # ggez
 I used `ggez` for the graphics of this game since it's easy to use. We have 3 parts
@@ -234,13 +244,45 @@ We initialize our game with a grid and a starting configuration with parameters 
 ```rust
 struct MainState {
     grid: Grid,
+    config: Config,
 }
+
 impl MainState {
-    pub fn new(ctx: &mut Context) -> Self {
-        let mut grid = Grid::new(GRID_WIDTH, GRID_HEIGHT);
-        let start_cells_coords = GLIDER_GUN;
+    pub fn new(_ctx: &mut Context, config: Config) -> Self {
+        // Initialize the grid based on configuration
+        let mut grid = Grid::new(config.grid_width, config.grid_height);
+        // Initialize starting configuration
+        let mut start_cells_coords: Vec<Point> = vec![];
+        match &config.initial_state[..] {
+            "glider-gun" => {
+                start_cells_coords = GLIDER_GUN.iter().map(|&p| p.into()).collect::<Vec<Point>>();
+            }
+            "toad" => {
+                start_cells_coords = TOAD.iter().map(|&p| p.into()).collect::<Vec<Point>>();
+            }
+            "glider" => {
+                start_cells_coords = GLIDER.iter().map(|&p| p.into()).collect::<Vec<Point>>();
+            }
+            "blinker" => {
+                start_cells_coords = BLINKER.iter().map(|&p| p.into()).collect::<Vec<Point>>();
+            }
+            _ => {
+                let mut rng = rand::thread_rng();
+                for i in 0..config.grid_width{
+                    for j in 0..config.grid_height{
+                        if rng.gen::<bool>(){
+                            start_cells_coords.push((i, j).into());
+                        }
+                    }
+                }
+            }
+        }
+        // Convert the starting states into a vector of points
         grid.set_state(&start_cells_coords);
-        return MainState { grid: grid };
+        return MainState {
+            grid: grid,
+            config: config,
+        };
     }
 }
 ```
@@ -255,12 +297,14 @@ impl EventHandler for MainState {
 - We set the fps using `ggez::timer::check_update_time(ctx, FPS)`
 - We update the grid
 ```rust
+impl EventHandler for MainState {
     fn update(&mut self, ctx: &mut Context) -> GameResult {
         while ggez::timer::check_update_time(ctx, FPS) {
             self.grid.update();
         }
         Ok(())
     }
+}
 ```
 
 ### `Draw` function
@@ -268,7 +312,8 @@ impl EventHandler for MainState {
 2. Make a mesh builder and add alive cells and a grid (if given) to it
 3. Draw the mesh and present it to the screen
 ```rust
-fn draw(&mut self, ctx: &mut Context) -> GameResult {
+impl EventHandler for MainState {
+    fn draw(&mut self, ctx: &mut Context) -> GameResult {
         graphics::clear(ctx, graphics::BLACK);
         // Mesh builder
         let mut builder = graphics::MeshBuilder::new();
@@ -280,16 +325,16 @@ fn draw(&mut self, ctx: &mut Context) -> GameResult {
         );
         // Draw cells
         for (idx, cell) in self.grid.cells.iter().enumerate() {
-            if cell.alive {
-                let (row, col) = index_to_coords(idx);
+            if cell.is_alive() {
+                let pos = self.grid.index_to_coords(idx);
                 let color = graphics::Color::new(0., 200., 0., 1.); // Green
                 builder.rectangle(
                     graphics::DrawMode::fill(),
                     graphics::Rect::new(
-                        col as f32 * CELL_SIZE,
-                        row as f32 * CELL_SIZE,
-                        CELL_SIZE,
-                        CELL_SIZE,
+                        pos.x as f32 * self.config.cell_size,
+                        pos.y as f32 * self.config.cell_size,
+                        self.config.cell_size,
+                        self.config.cell_size,
                     ),
                     color,
                 );
@@ -299,14 +344,14 @@ fn draw(&mut self, ctx: &mut Context) -> GameResult {
         if GRID {
             for idx in 0..self.grid.cells.len() {
                 let color = graphics::Color::new(10., 10., 10., 1.); // ?
-                let (row, col) = index_to_coords(idx);
+                let pos = self.grid.index_to_coords(idx);
                 builder.rectangle(
                     graphics::DrawMode::stroke(1.),
                     graphics::Rect::new(
-                        col as f32 * CELL_SIZE,
-                        row as f32 * CELL_SIZE,
-                        CELL_SIZE,
-                        CELL_SIZE,
+                        pos.x as f32 * self.config.cell_size,
+                        pos.y as f32 * self.config.cell_size,
+                        self.config.cell_size,
+                        self.config.cell_size,
                     ),
                     color,
                 );
@@ -319,4 +364,6 @@ fn draw(&mut self, ctx: &mut Context) -> GameResult {
         graphics::present(ctx)?;
         Ok(())
     }
+}
+}
 ```
