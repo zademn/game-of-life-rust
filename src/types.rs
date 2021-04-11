@@ -6,6 +6,6 @@ pub struct Point{
 
 impl From<(usize, usize)> for Point{
     fn from(item: (usize, usize)) -> Self{
-        return Self {x: item.0, y: item.1};
+        Self {x: item.0, y: item.1}
     }
 }

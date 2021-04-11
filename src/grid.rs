@@ -11,11 +11,11 @@ pub struct Grid {
 impl Grid {
     // Width and height of the Grid
     pub fn new(width: usize, height: usize) -> Self {
-        return Self {
-            width: width,
-            height: height,
+        Self {
+            width,
+            height,
             cells: vec![Cell::new(false); width * height],
-        };
+        }
     }
     pub fn set_state(&mut self, cells_coords: &[Point]) {
         self.cells = vec![Cell::new(false); self.width * self.height];
@@ -56,11 +56,11 @@ impl Grid {
         if cell.is_alive() && (num_neighbour_alive == 2 || num_neighbour_alive == 3) {
             return true; // alive
         }
-        if cell.is_alive() == false && num_neighbour_alive == 3 {
+        if !cell.is_alive() && num_neighbour_alive == 3 {
             return true;
         }
 
-        return false;
+        false
     }
     pub fn update(&mut self) {
         // Vector of next states. It will match by index
@@ -74,9 +74,8 @@ impl Grid {
         let next_states = (0..self.cells.len())
             .into_par_iter()
             .map(|idx| {
-                let next_state = self.cell_next_state(idx);
-                //next_states[idx] = next_state;
-                next_state
+                // next state
+                self.cell_next_state(idx)
             })
             .collect::<Vec<bool>>();
 
@@ -91,11 +90,11 @@ impl Grid {
     }
     /// Converts a pair of cell coords to index in the cells vector
     pub fn coords_to_index(&self, pos: Point) -> usize {
-        return pos.y * self.width + pos.x;
+        pos.y * self.width + pos.x
     }
 
     /// Converts a index in the cells vecotr into pair of cell coords
     pub fn index_to_coords(&self, index: usize) -> Point {
-        return Point {x: index % self.height, y: index / self.width};
+        Point {x: index % self.height, y: index / self.width}
     }
 }

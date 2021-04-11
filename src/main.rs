@@ -5,7 +5,7 @@ mod types;
 use crate::grid::Grid;
 use crate::types::Point;
 use clap::{App, Arg};
-use ggez;
+
 use ggez::event;
 use ggez::event::EventHandler;
 use ggez::graphics;
@@ -108,10 +108,10 @@ impl MainState {
         }
         // Convert the starting states into a vector of points
         grid.set_state(&start_cells_coords);
-        return MainState {
-            grid: grid,
-            config: config,
-        };
+        MainState {
+            grid,
+            config,
+        }
     }
 }
 
@@ -224,11 +224,11 @@ fn main() -> GameResult {
     let fps = 20;
     // Set configuration
     let config: Config = Config {
-        grid_width: grid_width,
-        grid_height: grid_height,
+        grid_width,
+        grid_height,
         cell_size: screen_size.0 / grid_width as f32,
-        screen_size: screen_size,
-        fps: fps,
+        screen_size,
+        fps,
         initial_state: initial_state.to_string(),
     };
 

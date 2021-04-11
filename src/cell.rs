@@ -8,10 +8,10 @@ pub struct Cell {
 
 impl Cell {
     pub fn new(alive: bool) -> Self {
-        return Self { alive: alive };
+        Self { alive }
     }
     pub fn is_alive(&self) -> bool {
-        return self.alive;
+        self.alive
     }
     pub fn set_state(&mut self, state: bool){
         self.alive = state;

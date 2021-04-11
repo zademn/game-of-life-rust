@@ -1,7 +1,7 @@
 [package]
 name = "game_of_life"
 version = "0.1.0"
-authors = ["Stroia Dacian <zademnwalves@gmail.com>"]
+authors = ["Zademn <zademnwalves@gmail.com>"]
 edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
