@@ -24,11 +24,6 @@ use ggez::{Context, ContextBuilder, GameResult};
 use rand::Rng;
 ```
 
-# Settings
-
-```rust
-
-```
 # Structs and Logic
 ## The point
 > A point structure that stores the `x` and `y` coordinate. We will use `(usize, usize).into()` to convert it fast
