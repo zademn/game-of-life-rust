@@ -39,20 +39,20 @@ impl Grid {
 
                 // Make torus
                 if neighbour_coords.0 < 0 {
-                    // top left
+                    // top-left cell
                     if neighbour_coords.1 < 0 {
                         neighbour_pos = Point {
                             x: self.width - 1,
                             y: self.height - 1,
                         }
                     } else if neighbour_coords.1 > self.height as isize - 1 {
-                        // bottom left
+                        // bottom-left cell
                         neighbour_pos = Point {
                             x: self.width - 1,
                             y: 0,
                         }
                     } else {
-                        // just left
+                        // left cell
                         neighbour_pos = Point {
                             x: self.width - 1,
                             y: neighbour_coords.1 as usize,
@@ -60,35 +60,35 @@ impl Grid {
                     }
                 } else if neighbour_coords.0 > self.width as isize - 1 {
                     if neighbour_coords.1 < 0 {
-                        // top right
+                        // top-right cell
                         neighbour_pos = Point {
                             x: 0,
                             y: self.height - 1,
                         }
                     } else if neighbour_coords.1 > self.height as isize - 1 {
-                        // bottom right
+                        // bottom-right cell
                         neighbour_pos = Point { x: 0, y: 0 }
                     } else {
-                        // just right
+                        // right cell
                         neighbour_pos = Point {
                             x: 0,
                             y: neighbour_coords.1 as usize,
                         }
                     }
                 } else if neighbour_coords.1 < 0 {
-                    // just top
+                    // top cell
                     neighbour_pos = Point {
                         x: neighbour_coords.0 as usize,
                         y: self.height - 1,
                     }
                 } else if neighbour_coords.1 > self.height as isize - 1 {
-                    // just bottom
+                    // bottom cell
                     neighbour_pos = Point {
                         x: neighbour_coords.0 as usize,
                         y: 0,
                     }
                 } else {
-                    // Others
+                    // Others cells
                     neighbour_pos = Point {
                         x: neighbour_coords.0 as usize,
                         y: neighbour_coords.1 as usize,
