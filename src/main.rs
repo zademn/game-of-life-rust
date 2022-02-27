@@ -176,7 +176,7 @@ fn main() -> GameResult {
     // CLI
     let matches = App::new("Game of Life")
         .version("0.2")
-        .author("Pavel")
+        .author("Zademn")
         .arg(
             Arg::with_name("width")
                 .short("w")
@@ -218,7 +218,7 @@ fn main() -> GameResult {
         .unwrap();
     let initial_state = matches.value_of("initial_state").unwrap();
     let screen_size = (720., 720.);
-    let fps = 15;
+    let fps = 10;
     // Set configuration
     let config: Config = Config {
         grid_width,
