@@ -1,5 +1,3 @@
-
-
 // Structs and Implementations
 #[derive(Clone, Debug)]
 pub struct Cell {
@@ -13,7 +11,7 @@ impl Cell {
     pub fn is_alive(&self) -> bool {
         self.alive
     }
-    pub fn set_state(&mut self, state: bool){
+    pub fn set_state(&mut self, state: bool) {
         self.alive = state;
     }
 }
