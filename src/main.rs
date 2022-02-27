@@ -97,9 +97,9 @@ impl MainState {
             }
             _ => {
                 let mut rng = rand::thread_rng();
-                for i in 0..config.grid_width{
-                    for j in 0..config.grid_height{
-                        if rng.gen::<bool>(){
+                for i in 0..config.grid_width {
+                    for j in 0..config.grid_height {
+                        if rng.gen::<bool>() {
                             start_cells_coords.push((i, j).into());
                         }
                     }
@@ -108,10 +108,7 @@ impl MainState {
         }
         // Convert the starting states into a vector of points
         grid.set_state(&start_cells_coords);
-        MainState {
-            grid,
-            config,
-        }
+        MainState { grid, config }
     }
 }
 
@@ -178,8 +175,8 @@ impl EventHandler for MainState {
 fn main() -> GameResult {
     // CLI
     let matches = App::new("Game of Life")
-        .version("0.1")
-        .author("Zademn")
+        .version("0.2")
+        .author("Pavel")
         .arg(
             Arg::with_name("width")
                 .short("w")
@@ -221,7 +218,7 @@ fn main() -> GameResult {
         .unwrap();
     let initial_state = matches.value_of("initial_state").unwrap();
     let screen_size = (720., 720.);
-    let fps = 20;
+    let fps = 15;
     // Set configuration
     let config: Config = Config {
         grid_width,
