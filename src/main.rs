@@ -70,6 +70,9 @@ pub struct Config {
     pub screen_size: (f32, f32),
     pub fps: u32,
     pub initial_state: String,
+    pub max_iterations: usize,
+    pub alive_probability: f64,
+    pub dead_probability: f64,
 }
 
 struct MainState {
@@ -79,7 +82,13 @@ struct MainState {
 impl MainState {
     pub fn new(_ctx: &mut Context, config: Config) -> Self {
         // Initialize the grid based on configuration
-        let mut grid = Grid::new(config.grid_width, config.grid_height);
+        let mut grid = Grid::new(
+            config.grid_width,
+            config.grid_height,
+            config.max_iterations,
+            config.dead_probability,
+            config.alive_probability,
+        );
         // Initialize starting configuration
         let mut start_cells_coords: Vec<Point> = vec![];
         match &config.initial_state[..] {
@@ -97,9 +106,9 @@ impl MainState {
             }
             _ => {
                 let mut rng = rand::thread_rng();
-                for i in 0..config.grid_width{
-                    for j in 0..config.grid_height{
-                        if rng.gen::<bool>(){
+                for i in 0..config.grid_width {
+                    for j in 0..config.grid_height {
+                        if rng.gen::<bool>() {
                             start_cells_coords.push((i, j).into());
                         }
                     }
@@ -108,10 +117,7 @@ impl MainState {
         }
         // Convert the starting states into a vector of points
         grid.set_state(&start_cells_coords);
-        MainState {
-            grid,
-            config,
-        }
+        MainState { grid, config }
     }
 }
 
@@ -178,7 +184,7 @@ impl EventHandler for MainState {
 fn main() -> GameResult {
     // CLI
     let matches = App::new("Game of Life")
-        .version("0.1")
+        .version("0.2")
         .author("Zademn")
         .arg(
             Arg::with_name("width")
@@ -221,7 +227,7 @@ fn main() -> GameResult {
         .unwrap();
     let initial_state = matches.value_of("initial_state").unwrap();
     let screen_size = (720., 720.);
-    let fps = 20;
+    let fps = 10;
     // Set configuration
     let config: Config = Config {
         grid_width,
@@ -230,6 +236,9 @@ fn main() -> GameResult {
         screen_size,
         fps,
         initial_state: initial_state.to_string(),
+        max_iterations: 600,
+        alive_probability: 0.9,
+        dead_probability: 0.97,
     };
 
     // Setup ggez stuff

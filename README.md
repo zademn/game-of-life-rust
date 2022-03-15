@@ -1,17 +1,21 @@
 # Game of life
+
 I made this project to practice the rust language.
 
 Below is a walkthrough for the project's code.
+
 - cell.rs
 - grid.rs
 - types.rs
 - main.rs
 
 # Imports
+
 - We import `ggez` for our graphics and `rayon` to parallelize the update functionality. We use `clap` for command line arguments
 - https://github.com/ggez/ggez
 - https://github.com/rayon-rs/rayon
 - https://github.com/clap-rs/clap
+
 ```rust
 use crate::grid::Grid;
 use crate::types::Point;
@@ -25,9 +29,13 @@ use rand::Rng;
 ```
 
 # Structs and Logic
+
 ## The point
+
 > A point structure that stores the `x` and `y` coordinate. We will use `(usize, usize).into()` to convert it fast
+
 - Defined in types.rs
+
 ```rust
 #[derive(Debug, Copy, Clone)]
 pub struct Point{
@@ -41,9 +49,13 @@ impl From<(usize, usize)> for Point{
     }
 }
 ```
+
 ## The cell
+
 > Keeps a `bool` as its state (if it's alive or not)
+
 - Defined in cell.rs
+
 ```rust
 #[derive(Clone, Debug)]
 pub struct Cell {
@@ -64,6 +76,7 @@ impl Cell {
 ```
 
 ## The Grid
+
 > The grid has a width and height and we keep the cells in a `Vec<Cells>`
 
 ```rust
@@ -75,6 +88,7 @@ struct Grid {
 ```
 
 ## State functions
+
 - The `new` function creates a state based on a configuration given in settings
 - The `set_state` function sets a given `Vec<Cells>` to alive and the rest to dead
 
@@ -97,13 +111,17 @@ impl Grid {
     }
 }
 ```
+
 ### Update function
+
 1. We get a `Vec<bool>` of `next_states` for each cell
 2. We update the cells with the new cells
 
 **Note**
+
 - I used `rayon` for parallelization since sequential code killed my fps when I tried bigger configurations
 - Obviously, code can be optimized
+
 ```rust
 impl Grid{
     pub fn update(&mut self) {
@@ -137,7 +155,9 @@ impl Grid{
 ```
 
 ### Get next cell
+
 Given a cell `idx` in the `Vec<Cells>` return a `bool` representing the next state
+
 1. Count alive neighbours
 2. Get next state acording to the rules https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life
 
@@ -153,40 +173,91 @@ impl Grid{
                 if x_off == 0 && y_off == 0 {
                     continue;
                 }
-                
+                let neighbour_pos;
                 let neighbour_coords = (cell_pos.x as isize + x_off, cell_pos.y as isize + y_off);
-                if neighbour_coords.0 < 0
-                    || neighbour_coords.0 > self.width as isize - 1
-                    || neighbour_coords.1 < 0
-                    || neighbour_coords.1 > self.height as isize - 1
-                {
-                    continue;
+
+                // Make torus
+                if neighbour_coords.0 < 0 {
+                    // top-left cell
+                    if neighbour_coords.1 < 0 {
+                        neighbour_pos = Point {
+                            x: self.width - 1,
+                            y: self.height - 1,
+                        }
+                    } else if neighbour_coords.1 > self.height as isize - 1 {
+                        // bottom-left cell
+                        neighbour_pos = Point {
+                            x: self.width - 1,
+                            y: 0,
+                        }
+                    } else {
+                        // left cell
+                        neighbour_pos = Point {
+                            x: self.width - 1,
+                            y: neighbour_coords.1 as usize,
+                        }
+                    }
+                } else if neighbour_coords.0 > self.width as isize - 1 {
+                    if neighbour_coords.1 < 0 {
+                        // top-right cell
+                        neighbour_pos = Point {
+                            x: 0,
+                            y: self.height - 1,
+                        }
+                    } else if neighbour_coords.1 > self.height as isize - 1 {
+                        // bottom-right cell
+                        neighbour_pos = Point { x: 0, y: 0 }
+                    } else {
+                        // right cell
+                        neighbour_pos = Point {
+                            x: 0,
+                            y: neighbour_coords.1 as usize,
+                        }
+                    }
+                } else if neighbour_coords.1 < 0 {
+                    // top cell
+                    neighbour_pos = Point {
+                        x: neighbour_coords.0 as usize,
+                        y: self.height - 1,
+                    }
+                } else if neighbour_coords.1 > self.height as isize - 1 {
+                    // bottom cell
+                    neighbour_pos = Point {
+                        x: neighbour_coords.0 as usize,
+                        y: 0,
+                    }
+                } else {
+                    // Others cells
+                    neighbour_pos = Point {
+                        x: neighbour_coords.0 as usize,
+                        y: neighbour_coords.1 as usize,
+                    };
                 }
-                let neighbour_pos = Point {x: neighbour_coords.0 as usize, y: neighbour_coords.1 as usize};
-                let idx =
-                    self.coords_to_index(neighbour_pos);
+
+                let idx = self.coords_to_index(neighbour_pos);
                 if self.cells[idx].is_alive() {
                     num_neighbour_alive += 1;
                 }
             }
         }
 
-        // Rules (from wikipedia)
+        // Rules https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life
         if cell.is_alive() && (num_neighbour_alive == 2 || num_neighbour_alive == 3) {
             return true; // alive
         }
-        if cell.is_alive() == false && num_neighbour_alive == 3 {
+        if !cell.is_alive() && num_neighbour_alive == 3 {
             return true;
         }
 
-        return false;
+        false
     }
-}
 ```
 
 # Clap and CLI
+
 - We keep the configurations in a `struct Config`
-From the help:
+  From the help:
+
 ```
 USAGE:
     game_of_life.exe [OPTIONS]
@@ -201,6 +272,7 @@ OPTIONS:
                                            random]
     -w, --width <width>                    Grid width [default: 64]
 ```
+
 ```rust
 #[derive(Debug, Clone)]
 pub struct Config {
@@ -212,12 +284,17 @@ pub struct Config {
     pub initial_state: String,
 }
 ```
+
 # ggez
+
 I used `ggez` for the graphics of this game since it's easy to use. We have 3 parts
+
 ## 1. main function setup
+
 1. We build a new context `ctx` and we set the configuration (title, resolution etc)
 2. We make a new `MainState` from our `ctx`
-3. We run the event loop 
+3. We run the event loop
+
 ```rust
 fn main() -> GameResult {
     // Setup stuff
@@ -233,9 +310,11 @@ fn main() -> GameResult {
 ```
 
 ## 2. A `MainState`
+
 > initializes, updates and draws
 
 We initialize our game with a grid and a starting configuration with parameters given in the settings
+
 ```rust
 struct MainState {
     grid: Grid,
@@ -281,16 +360,22 @@ impl MainState {
     }
 }
 ```
+
 ## 3. `EventState` trait for the `MainState`
+
 - We need to implement the `update` and `draw` functions now
+
 ```rust
 impl EventHandler for MainState {
  //{...}
 }
 ```
+
 ### `Update` function
+
 - We set the fps using `ggez::timer::check_update_time(ctx, FPS)`
 - We update the grid
+
 ```rust
 impl EventHandler for MainState {
     fn update(&mut self, ctx: &mut Context) -> GameResult {
@@ -303,9 +388,11 @@ impl EventHandler for MainState {
 ```
 
 ### `Draw` function
+
 1. Set the background color with `graphics::clear(ctx, graphics::BLACK);`
 2. Make a mesh builder and add alive cells and a grid (if given) to it
 3. Draw the mesh and present it to the screen
+
 ```rust
 impl EventHandler for MainState {
     fn draw(&mut self, ctx: &mut Context) -> GameResult {
