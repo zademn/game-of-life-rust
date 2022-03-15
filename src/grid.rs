@@ -6,6 +6,9 @@ pub struct Grid {
     width: usize,
     height: usize,
     pub cells: Vec<Cell>,
+    pub cells_probabilities: Vec<usize>,
+    pub iteration: usize,
+    pub max_iterations: usize,
 }
 
 impl Grid {
@@ -15,6 +18,9 @@ impl Grid {
             width,
             height,
             cells: vec![Cell::new(false); width * height],
+            cells_probabilities: vec![0; width * height],
+            iteration: 0,
+            max_iterations: 600,
         }
     }
     pub fn set_state(&mut self, cells_coords: &[Point]) {
@@ -112,6 +118,35 @@ impl Grid {
 
         false
     }
+
+    pub fn set_probability(&mut self, idx: usize) {
+        let cell = self.cells[idx].clone();
+        if self.iteration % 30 == 0 && self.iteration != self.max_iterations + 1 && cell.is_alive()
+        {
+            self.cells_probabilities[idx] += 1;
+        }
+    }
+
+    pub fn calculate_entropy(&mut self) {
+        if self.iteration == self.max_iterations + 1 {
+            let size = self.cells_probabilities.len();
+            let mut entropy = 0.0;
+            let mut entropy_vec: Vec<f64> = vec![0.0; size];
+
+            for idx in 0..size {
+                entropy_vec[idx] = self.cells_probabilities[idx] as f64 / size as f64;
+            }
+
+            for idx in 0..size {
+                if entropy_vec[idx] != 0.0 {
+                    entropy += entropy_vec[idx] * entropy_vec[idx].log2();
+                }
+            }
+
+            println!("{}", -entropy);
+        }
+    }
+
     pub fn update(&mut self) {
         // Vector of next states. It will match by index
         // Get next states
@@ -137,6 +172,14 @@ impl Grid {
             .into_par_iter()
             .map(|idx| Cell::new(next_states[idx]))
             .collect::<Vec<Cell>>();
+
+        for idx in 0..self.cells.len() {
+            self.set_probability(idx);
+        }
+
+        self.calculate_entropy();
+
+        self.iteration += 1;
     }
     /// Converts a pair of cell coords to index in the cells vector
     pub fn coords_to_index(&self, pos: Point) -> usize {
