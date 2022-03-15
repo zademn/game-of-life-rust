@@ -70,6 +70,9 @@ pub struct Config {
     pub screen_size: (f32, f32),
     pub fps: u32,
     pub initial_state: String,
+    pub max_iterations: usize,
+    pub alive_probability: f64,
+    pub dead_probability: f64,
 }
 
 struct MainState {
@@ -79,7 +82,13 @@ struct MainState {
 impl MainState {
     pub fn new(_ctx: &mut Context, config: Config) -> Self {
         // Initialize the grid based on configuration
-        let mut grid = Grid::new(config.grid_width, config.grid_height);
+        let mut grid = Grid::new(
+            config.grid_width,
+            config.grid_height,
+            config.max_iterations,
+            config.dead_probability,
+            config.alive_probability,
+        );
         // Initialize starting configuration
         let mut start_cells_coords: Vec<Point> = vec![];
         match &config.initial_state[..] {
@@ -227,6 +236,9 @@ fn main() -> GameResult {
         screen_size,
         fps,
         initial_state: initial_state.to_string(),
+        max_iterations: 600,
+        alive_probability: 0.9,
+        dead_probability: 0.97,
     };
 
     // Setup ggez stuff

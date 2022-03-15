@@ -1,5 +1,6 @@
 use crate::cell::Cell;
 use crate::types::Point;
+use rand::Rng;
 use rayon::prelude::*;
 
 pub struct Grid {
@@ -9,18 +10,28 @@ pub struct Grid {
     pub cells_probabilities: Vec<usize>,
     pub iteration: usize,
     pub max_iterations: usize,
+    pub dead_probability: f64,
+    pub alive_probability: f64,
 }
 
 impl Grid {
     // Width and height of the Grid
-    pub fn new(width: usize, height: usize) -> Self {
+    pub fn new(
+        width: usize,
+        height: usize,
+        max_iterations: usize,
+        dead_probability: f64,
+        alive_probability: f64,
+    ) -> Self {
         Self {
             width,
             height,
             cells: vec![Cell::new(false); width * height],
             cells_probabilities: vec![0; width * height],
             iteration: 0,
-            max_iterations: 600,
+            max_iterations: max_iterations,
+            dead_probability: dead_probability,
+            alive_probability: alive_probability,
         }
     }
     pub fn set_state(&mut self, cells_coords: &[Point]) {
@@ -107,16 +118,28 @@ impl Grid {
                 }
             }
         }
+        let mut rnd = rand::thread_rng();
 
         // Rules https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life
-        if cell.is_alive() && (num_neighbour_alive == 2 || num_neighbour_alive == 3) {
-            return true; // alive
-        }
-        if !cell.is_alive() && num_neighbour_alive == 3 {
-            return true;
+        if cell.is_alive() && (num_neighbour_alive == 2 || num_neighbour_alive == 3)
+            || (!cell.is_alive() && num_neighbour_alive == 3)
+        {
+            let probability = rnd.gen_range(0.0..1.0);
+
+            if probability <= self.alive_probability {
+                return true; // alive
+            }
+
+            return false;
         }
 
-        false
+        let probability = rnd.gen_range(0.0..1.0);
+
+        if probability <= self.dead_probability {
+            return false;
+        }
+
+        return true;
     }
 
     pub fn set_probability(&mut self, idx: usize) {
