@@ -12,6 +12,8 @@ pub struct Grid {
     pub max_iterations: usize,
     pub dead_probability: f64,
     pub alive_probability: f64,
+    pub set_probability_point: usize,
+    pub count_of_set_points: usize
 }
 
 impl Grid {
@@ -22,6 +24,7 @@ impl Grid {
         max_iterations: usize,
         dead_probability: f64,
         alive_probability: f64,
+        set_probability_point: usize,
     ) -> Self {
         Self {
             width,
@@ -32,6 +35,8 @@ impl Grid {
             max_iterations: max_iterations,
             dead_probability: dead_probability,
             alive_probability: alive_probability,
+            set_probability_point: set_probability_point,
+            count_of_set_points: max_iterations / set_probability_point
         }
     }
     pub fn set_state(&mut self, cells_coords: &[Point]) {
@@ -144,7 +149,7 @@ impl Grid {
 
     pub fn set_probability(&mut self, idx: usize) {
         let cell = self.cells[idx].clone();
-        if self.iteration % 30 == 0 && self.iteration != self.max_iterations + 1 && cell.is_alive()
+        if self.iteration % self.set_probability_point == 0 && self.iteration != self.max_iterations + 1 && cell.is_alive()
         {
             self.cells_probabilities[idx] += 1;
         }
@@ -157,7 +162,8 @@ impl Grid {
             let mut entropy_vec: Vec<f64> = vec![0.0; size];
 
             for idx in 0..size {
-                entropy_vec[idx] = self.cells_probabilities[idx] as f64 / size as f64;
+                // На что делить: size?, кол-во прогонов автомата, кол-во установок значений в клетку
+                entropy_vec[idx] = self.cells_probabilities[idx] as f64 / self.count_of_set_points as f64;
             }
 
             for idx in 0..size {

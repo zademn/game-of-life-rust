@@ -73,6 +73,7 @@ pub struct Config {
     pub max_iterations: usize,
     pub alive_probability: f64,
     pub dead_probability: f64,
+    pub set_probability_point: usize
 }
 
 struct MainState {
@@ -88,6 +89,7 @@ impl MainState {
             config.max_iterations,
             config.dead_probability,
             config.alive_probability,
+            config.set_probability_point
         );
         // Initialize starting configuration
         let mut start_cells_coords: Vec<Point> = vec![];
@@ -239,6 +241,7 @@ fn main() -> GameResult {
         max_iterations: 600,
         alive_probability: 0.9,
         dead_probability: 0.97,
+        set_probability_point: 30,
     };
 
     // Setup ggez stuff
