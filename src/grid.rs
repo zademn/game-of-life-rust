@@ -156,24 +156,22 @@ impl Grid {
     }
 
     pub fn calculate_entropy(&mut self) {
-        if self.iteration == self.max_iterations + 1 {
-            let size = self.cells_probabilities.len();
-            let mut entropy = 0.0;
-            let mut entropy_vec: Vec<f64> = vec![0.0; size];
+        let size = self.cells_probabilities.len();
+        let mut entropy = 0.0;
+        let mut entropy_vec: Vec<f64> = vec![0.0; size];
 
-            for idx in 0..size {
-                // На что делить: size?, кол-во прогонов автомата, кол-во установок значений в клетку
-                entropy_vec[idx] = self.cells_probabilities[idx] as f64 / self.count_of_set_points as f64;
-            }
-
-            for idx in 0..size {
-                if entropy_vec[idx] != 0.0 {
-                    entropy += entropy_vec[idx] * entropy_vec[idx].log2();
-                }
-            }
-
-            println!("{}", -entropy);
+        for idx in 0..size {
+            // На что делить: size?, кол-во прогонов автомата, кол-во установок значений в клетку
+            entropy_vec[idx] = self.cells_probabilities[idx] as f64 / self.count_of_set_points as f64;
         }
+
+        for idx in 0..size {
+            if entropy_vec[idx] != 0.0 {
+                entropy += entropy_vec[idx] * entropy_vec[idx].log2();
+            }
+        }
+
+        println!("{}", -entropy);
     }
 
     pub fn update(&mut self) {
@@ -206,7 +204,9 @@ impl Grid {
             self.set_probability(idx);
         }
 
-        self.calculate_entropy();
+        if self.iteration == self.max_iterations + 1 {
+            self.calculate_entropy();
+        }
 
         self.iteration += 1;
     }

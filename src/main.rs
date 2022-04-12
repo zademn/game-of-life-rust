@@ -229,7 +229,7 @@ fn main() -> GameResult {
         .unwrap();
     let initial_state = matches.value_of("initial_state").unwrap();
     let screen_size = (720., 720.);
-    let fps = 10;
+    let fps = 25;
     // Set configuration
     let config: Config = Config {
         grid_width,
@@ -238,7 +238,7 @@ fn main() -> GameResult {
         screen_size,
         fps,
         initial_state: initial_state.to_string(),
-        max_iterations: 600,
+        max_iterations: 1000,
         alive_probability: 0.9,
         dead_probability: 0.97,
         set_probability_point: 30,
